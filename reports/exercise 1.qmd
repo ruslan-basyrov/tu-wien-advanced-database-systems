@@ -54,6 +54,6 @@ $$ LANGUAGE plpgsql;
 |    11 |1,155,027.75 |
 |    12 |  562,755.25 |
 
-: Result of executing `get_monthly_sales(109110, 2016)` {.striped .hover}
+: Result of executing `SELECT FROM * get_monthly_sales(109110, 2016)` {.striped .hover}
 
 :::
