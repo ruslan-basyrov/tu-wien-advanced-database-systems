@@ -153,7 +153,12 @@ BEFORE UPDATE OF last_sale_date
 ON go_products
 FOR EACH ROW
 EXECUTE FUNCTION check_last_sale_date();
+```
+:::
 
+
+::: {.callout-note collapse="true" title="Tests"}
+```sql
 UPDATE go_products
 SET last_sale_date = '2026-01-02'
 WHERE product_number = 1110;
@@ -169,8 +174,7 @@ WHERE product_number = 1110;
 ```
 :::
 
-
-::: {.callout-note collapse="true" title="Result"}
+::: {.callout-note collapse="true" title="Tests' Outcomes"}
 
 **Statement 4** *(UPDATE go_products)*
 ```text
@@ -193,6 +197,82 @@ ERROR: Execution stopped here due to an error: It is wrong to update `last_sale_
 #### Problem 2
 
 > The GO team wants to automatically maintain the `last_sale_date` in `go_products` whenever new sales are recorded in `go_daily_sales`. Since sales are often inserted in bulk, multiple tuples may be added with a single `INSERT` statement. Create a statement-level trigger that fires once per `INSERT` statement on `go_daily_sales`. The trigger should, update the `last_sale_date` in `go_products` to the current date for all products that have new sales in the inserted rows and log the start and end of the execution of the trigger for auditing purposes (Use `RAISE NOTICE`).
+
+
+::: {.callout-note collapse="true" title="Solution"}
+```sql
+ALTER TABLE go_products ADD COLUMN last_sale_date DATE;
+
+CREATE OR REPLACE FUNCTION update_last_sale_date()
+RETURNS TRIGGER
+AS $$
+BEGIN
+  RAISE NOTICE 'Trigger execution started';
+
+  UPDATE go_products
+  SET last_sale_date = CURRENT_DATE
+  WHERE product_number IN (
+    SELECT DISTINCT product_number
+    FROM new_sales
+  );
+
+  RAISE NOTICE 'Trigger execution ended';
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_update_last_sale_date
+AFTER INSERT ON go_daily_sales
+REFERENCING NEW TABLE AS new_sales
+FOR EACH STATEMENT
+EXECUTE FUNCTION update_last_sale_date();
+```
+:::
+
+
+::: {.callout-note collapse="true" title="Tests"}
+```sql
+INSERT INTO go_daily_sales VALUES (1201, 1110, 1, '2026-01-01', 1, 1.0, 1.0);
+
+INSERT INTO go_daily_sales VALUES
+  (1202, 2110, 1, '2026-01-01', 1, 1.0, 1.0),
+  (1201, 3110, 1, '2026-01-01', 1, 1.0, 1.0),
+  (1201, 4110, 1, '2026-01-01', 1, 1.0, 1.0);
+
+SELECT product_number, last_sale_date 
+FROM go_products 
+WHERE product_number IN (1110, 2110, 3110, 4110);
+```
+:::
+
+::: {.callout-note collapse="true" title="Tests' Outcomes"}
+
+**Statement 4** *(INSERT INTO go_daily_sales VALUES)*
+```text
+NOTICE: Trigger execution started
+NOTICE: Trigger execution ended
+INSERT executed
+```
+
+**Statement 5** *(INSERT INTO go_daily_sales VALUES)*
+```text
+NOTICE: Trigger execution started
+NOTICE: Trigger execution ended
+INSERT executed
+```
+
+**Statement 6** *(SELECT product_number, last_sale_date)*
+
+| # | product_number | last_sale_date |
+|:---:|:---:|:---:|
+| 1 | 4110 | "2026-03-23T00:00:00.000Z" |
+| 2 | 1110 | "2026-03-23T00:00:00.000Z" |
+| 3 | 3110 | "2026-03-23T00:00:00.000Z" |
+| 4 | 2110 | "2026-03-23T00:00:00.000Z" |
+
+:::
+
 
 #### Problem 3
 
