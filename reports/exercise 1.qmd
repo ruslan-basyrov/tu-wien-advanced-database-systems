@@ -5,17 +5,20 @@
 
 ## Part A
 
-### Exercise 1
+### Exercise 1 (Functions and Stored Procedures)
 
-The Great Outdoors retail chain wants to create a dashboard showing different aspects of their sales performance for analytics. They want to display the monthly sales performance of a given product for a specific year across all retailers in the dashboard. For this purpose, they need a `get_monthly_sales` function that given a `product_id` and a year, returns a table with 12 rows, showing the total sales (income) for each month of that `year`.
+
+> The Great Outdoors retail chain wants to create a dashboard showing different aspects of their sales performance for analytics. They want to display the monthly sales performance of a given product for a specific year across all retailers in the dashboard. For this purpose, they need a `get_monthly_sales` function that given a `product_id` and a year, returns a table with 12 rows, showing the total sales (income) for each month of that `year`.
+
 
 #### Problem 1
 
-Create a function that computes the total sales for all months as follows
 
-- For each month, run an aggregation query on `go_daily_sales` to calculate the total sales of that month.
-- If no sales exist for a month, output 0 as the total sales for that month.
+> Create a function that computes the total sales for all months as follows
+> - For each month, run an aggregation query on `go_daily_sales` to calculate the total sales of that month.
+> - If no sales exist for a month, output 0 as the total sales for that month.
 
+::: {.callout-note collapse="true" title="Solution"}
 ```sql
 CREATE OR REPLACE FUNCTION get_monthly_sales(product_id BIGINT, year BIGINT)
 RETURNS TABLE (month BIGINT, total_sales DECIMAL)
@@ -38,7 +41,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
+:::
 
+::: {.callout-note collapse="true" title="Result"}
 | month | total sales |
 |:-----:|:-----------:|
 |     1 |  753,928.75 |
@@ -55,12 +60,13 @@ $$ LANGUAGE plpgsql;
 |    12 |  562,755.25 |
 
 : Result of executing `SELECT * FROM get_monthly_sales(109110, 2016)` {.striped .hover}
-
+:::
 
 #### Problem 2
 
-Rewrite the function using a cursor to improve its efficiency.
+> Rewrite the function using a cursor to improve its efficiency.
 
+::: {.callout-note collapse="true" title="Solution"}
 ```sql
 CREATE OR REPLACE FUNCTION get_monthly_sales(product_id BIGINT, year INT)
 RETURNS TABLE (month INT, total_sales DECIMAL)
@@ -94,10 +100,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
+:::
 
 #### Problem 3
 
-Discuss the difference in efficiency of the two approaches
+> Discuss the difference in efficiency of the two approaches
 
 The difference is significant (3 times!):
 
@@ -107,6 +114,29 @@ The difference is significant (3 times!):
 (The runs did not include function declaration.)
 
 With the increase of the data size, differences would obviously increase further. As each iteration of the loop processes the whole table, it is much less efficient than the solution with a cursor, which in our case processes the table only once.
+
+
+### Exercise 2 (Triggers)
+
+> GO retail chain wants to maintain a `last_sale_date` in the `go_products` table. After adding the column:
+> ```sql
+> ALTER TABLE go_products ADD COLUMN last_sale_date DATE;
+> ```
+> they decide to use triggers to enforce and manage updates. Create triggers for the following scenarios and show how each trigger is attached to its table.
+
+#### Problem 1
+
+> The GO team wants to ensure data integrity for the `last_sale_date` column. They need a row-level trigger that fires on every update of `last_sale_date` for a product, with the following behavior:
+> - If the new `last_sale_date` is earlier than the existing value, the trigger should raise an exception to prevent the update.
+> - If the new date passes the validation, the trigger should log that the update was successful (Use `RAISE NOTICE`) and allow the update to proceed. Note that in the case where there is no previous date, this update should be allowed.
+
+#### Problem 2
+
+> The GO team wants to automatically maintain the `last_sale_date` in `go_products` whenever new sales are recorded in `go_daily_sales`. Since sales are often inserted in bulk, multiple tuples may be added with a single `INSERT` statement. Create a statement-level trigger that fires once per `INSERT` statement on `go_daily_sales`. The trigger should, update the `last_sale_date` in `go_products` to the current date for all products that have new sales in the inserted rows and log the start and end of the execution of the trigger for auditing purposes (Use `RAISE NOTICE`).
+
+#### Problem 3
+
+> Execute single inserts and bulk inserts into `go_daily_sales` and observe the behaviour of the triggers. Explain the behaviour in terms of which triggers fire, the order in which they execute, and how often each trigger fires.
 
 :::
 
