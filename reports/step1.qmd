@@ -1,0 +1,42 @@
+
+::: {.wideblock}
+```sql
+CREATE OR REPLACE FUNCTION get_monthly_sales(product_id BIGINT, year BIGINT)
+RETURNS TABLE (month BIGINT, total_sales BIGINT)
+AS $$
+DECLARE
+  n_month INT;
+BEGIN
+  FOR n_month IN 1..12 LOOP
+    month := n_month;
+
+    SELECT COALESCE(SUM(quantity * unit_sale_price), 0)
+    INTO total_sales
+    FROM go_daily_sales
+    WHERE product_number = product_id 
+      AND EXTRACT(YEAR FROM date) = year
+      AND EXTRACT(MONTH FROM date) = n_month;
+
+    RETURN NEXT;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+```
+:::
+
+| month | total sales |
+|:-----:|:-----------:|
+|     1 |     753,929 |
+|     2 |     602,276 |
+|     3 |     502,065 |
+|     4 |     535,228 |
+|     5 |      64,881 |
+|     6 |     627,853 |
+|     7 |     320,140 |
+|     8 |     495,635 |
+|     9 |     638,835 |
+|    10 |     711,212 |
+|    11 |   1,155,028 |
+|    12 |     562,755 |
+
+: Result of `get_monthly_sales(109110, 2016)` {.striped .hover}

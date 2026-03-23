@@ -62,12 +62,9 @@ rule render_report:
         ext="reports/_extensions/ruslan-basyrov/acuity/_extension.yml",
         qmd="reports/index.qmd",
         quarto_config="reports/_quarto.yml",
-        figure="results/figures/analysis.png",
     output:
         html="reports/_acuity/index.html",
     shell:
         """
-        mkdir -p reports/results/figures
-        cp {input.figure} reports/results/figures/
         {DOCKER_RUN} quarto render reports/
         """

@@ -1,37 +1,10 @@
 ---
-title: "Verity"
-subtitle: "Reproducible Analysis Report"
-author: ""
+title: "Advanced Database Systems"
+subtitle: "TU Wien Course"
+author: "Ruslan Basyrov"
 date: today
 bibliography: references.bib
 ---
 
 ## Overview
 
-This report assembles pre-computed results from the analysis pipeline.
-All computation is managed by Snakemake; this document only presents the
-outputs.
-
-## Data Processing
-
-<!-- TODO: Describe your data processing steps -->
-
-The raw data was cleaned and transformed by `src/process_data.py`.
-See `config/config.yaml` for the processing parameters used.
-
-## Analysis
-
-<!-- TODO: Describe your analysis -->
-
-::: {.callout-note}
-The figure below is produced by `src/analyse.R` and loaded as a
-pre-computed artifact.
-:::
-
-![Analysis results](results/figures/analysis.png){#fig-analysis}
-
-@fig-analysis shows the main findings of the analysis.
-
-## Conclusion
-
-<!-- TODO: Summarise your findings -->
