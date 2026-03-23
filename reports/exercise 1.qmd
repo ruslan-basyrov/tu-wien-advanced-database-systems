@@ -410,8 +410,78 @@ Resulting stratum:
 - Stratum 2: `non_dept_head_manager`, `result`. These are basically the result of applying negation filter to stratum 1.
 
 
+
+
+
+## Part C
+### Exercise 5
+
+#### Problem 1
+
+::: {.callout-note collapse="true" title="Solution"}
+```sql
+CREATE MATERIALIZED VIEW monthly_product_sales AS
+SELECT
+    product_number,
+    EXTRACT(YEAR FROM date) AS year,
+    EXTRACT(MONTH FROM date) AS month,
+    SUM(quantity * unit_sale_price) AS total_revenue
+FROM go_daily_sales
+GROUP BY product_number, EXTRACT(YEAR FROM date), EXTRACT(MONTH FROM date);
+```
 :::
 
 
+#### Problem 2
+::: {.callout-note collapse="true" title="Solution"}
+```sql
+WITH ranked AS (
+    SELECT
+        product_number,
+        month,
+        total_revenue,
+        RANK() OVER (PARTITION BY product_number ORDER BY total_revenue DESC) AS rank
+    FROM monthly_product_sales
+    WHERE year = 2018
+)
+SELECT product_number, month, total_revenue
+FROM ranked
+WHERE rank = 1
+ORDER BY product_number;
+```
+:::
 
+::: {.callout-note collapse="true" title="Results"}
 
+**Statement 1** *(CREATE MATERIALIZED VIEW monthly_produc...)*
+```text
+DEBUG rehashing catalog cache id 12 for pg_cast; 1025 tups, 512 buckets
+DEBUG creating and filling new WAL file
+DEBUG done creating and filling new WAL file
+CREATE executed
+```
+
+**Statement 2** *(WITH ranked AS (...))*
+
+| # | product_number | month | total_revenue |
+|:---:|:---:|:---:|:---:|
+| 1 | 1110 | 1 | 97557.10 |
+| 2 | 2110 | 5 | 27937.26 |
+| 3 | 3110 | 2 | 324321.68 |
+| 4 | 4110 | 6 | 53787.40 |
+| 5 | 5110 | 4 | 359092.51 |
+| 6 | 6110 | 3 | 186570.22 |
+| 7 | 7110 | 7 | 203166.29 |
+| 8 | 8110 | 6 | 219730.32 |
+| 9 | 9110 | 2 | 425539.74 |
+| 10 | 10110 | 6 | 49433.05 |
+| 11 | 11110 | 4 | 2663023.00 |
+| 12 | 12110 | 5 | 1666789.07 |
+| 13 | 13110 | 5 | 1620615.70 |
+| 14 | 14110 | 7 | 284896.82 |
+| 15 | 15110 | 5 | 851142.33 |
+
+: First 15/224 results {.striped .hover}
+:::
+
+:::
