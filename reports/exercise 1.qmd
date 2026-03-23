@@ -484,6 +484,7 @@ CREATE executed
 : First 15/224 results {.striped .hover}
 :::
 
+First, I created a materialized view to store the total revenue per product for each month and year. The `GROUP BY `naturally skips any months without sales. Then, I used a CTE to filter the data for the year 2018. Inside the CTE, the `RANK()` function ranks the months for each product based on their total revenue. Finally, the main query just selects the rows where the rank is 1 (the top-selling month).
 
 ### Exercise 6
 
@@ -513,6 +514,13 @@ GROUP BY product_number
 ORDER BY longest_streak DESC;
 ```
 :::
+
+Here, the recursive CTE calculates the longest streak by checking if the next day has a sale:
+
+- Getting unique sales dates. There may be several sales on the same day, hence `DISTINCT`. This is the base of recursion.
+- Building consecutive streaks recursively. The recursion tries to extend the streak by a day: it joins with the unique dates looking for `sale_date + INTERVAL '1 day'`. If a match exists, the streak is extended, otherwise, the recursion stops.
+- Taking the `MAX()`. As we are interested in the longest streaks by product.
+
 
 #### Problem 2
 ::: {.callout-note collapse="true" title="Solution"}
@@ -567,5 +575,6 @@ DEBUG rehashing catalog cache id 12 for pg_cast; 1025 tups, 512 buckets
 
 :::
 
+Same logic as in the exercise 5 but with the distinct date being pulled to a temporary table. The CTE uses the table to get the values. Somewhat counter-intuitively, the execution time is longer for this implementation. The results are the same, of course.
 
 :::
