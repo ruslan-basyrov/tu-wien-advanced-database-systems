@@ -1,0 +1,14 @@
+website:
+  sidebar:
+    style: "floating"
+    collapsible: true
+    contents: auto
+
+project:
+  type: website
+  output-dir: _acuity
+
+format:
+  acuity-html:
+    respect-user-color-scheme: true
+  acuity-typst: default

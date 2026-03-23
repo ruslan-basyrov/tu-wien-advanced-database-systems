@@ -1,0 +1,9 @@
+# --- Build's files ---------------------------------------------------------
+_extensions/
+results/
+.snakemake
+.docker_built
+data/processed
+
+# --- Other -----------------------------------------------------------------
+**/.DS_Store

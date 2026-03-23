@@ -1,0 +1,10 @@
+# Analysis configuration
+# Edit these parameters for your specific analysis
+
+data:
+  raw: "data/raw/input.csv"
+  processed: "data/processed/clean.csv"
+
+analysis:
+  alpha: 0.05
+  seed: 42

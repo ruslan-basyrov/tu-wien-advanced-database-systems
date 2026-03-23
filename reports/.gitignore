@@ -1,0 +1,6 @@
+_acuity/
+.quarto/
+results/
+
+/.quarto/
+**/*.quarto_ipynb
