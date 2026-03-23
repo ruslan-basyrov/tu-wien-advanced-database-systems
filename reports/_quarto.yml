@@ -12,3 +12,5 @@ format:
   acuity-html:
     respect-user-color-scheme: true
   acuity-typst: default
+
+format-links: true

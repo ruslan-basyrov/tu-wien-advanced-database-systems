@@ -1,5 +1,21 @@
 
+# Exercise Sheet 1
+
 ::: {.wideblock}
+
+## Part A
+
+### Exercise 1
+
+The Great Outdoors retail chain wants to create a dashboard showing different aspects of their sales performance for analytics. They want to display the monthly sales performance of a given product for a specific year across all retailers in the dashboard. For this purpose, they need a `get_monthly_sales` function that given a `product_id` and a year, returns a table with 12 rows, showing the total sales (income) for each month of that `year`.
+
+#### Problem 1
+
+Create a function that computes the total sales for all months as follows
+
+- For each month, run an aggregation query on `go_daily_sales` to calculate the total sales of that month.
+- If no sales exist for a month, output 0 as the total sales for that month.
+
 ```sql
 CREATE OR REPLACE FUNCTION get_monthly_sales(product_id BIGINT, year BIGINT)
 RETURNS TABLE (month BIGINT, total_sales BIGINT)
@@ -22,7 +38,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
-:::
 
 | month | total sales |
 |:-----:|:-----------:|
@@ -39,4 +54,6 @@ $$ LANGUAGE plpgsql;
 |    11 |   1,155,028 |
 |    12 |     562,755 |
 
-: Result of `get_monthly_sales(109110, 2016)` {.striped .hover}
+: Result of executing `get_monthly_sales(109110, 2016)` {.striped .hover}
+
+:::
