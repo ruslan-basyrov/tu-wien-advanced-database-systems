@@ -299,6 +299,82 @@ Both update statements (Statements 1 and 2) were correct from the viewpoint of t
 Of course, the second trigger was also activated which is evident in the results: notices of each statement start and end with the notice by the trigger. Since second trigger updates the rows between its execution's logs, the first trigger's notices happen between the logs.
 
 
+## Part B
 
+### Exercise 3
+
+The naive algorithm is to start with a set of facts and based on the rules deduce new facts in rounds until a round with no new rules. The algorithm is naive since it uses all facts in each round, even the pairs of old facts. This is wasteful because we already know the deduced facts for such pairs from the previous rounds.
+
+In my semi-naive algorithm, I skip such pairs. In other words, at least one element in a pair must be a fact derived in the previous iteration.
+
+The results are formatted as a kind of pseudocode.
+
+#### Round 1
+
+Initialisation. Every flight is a route.
+
+```text
+delta 1:
+  VIE-BER, VIE-PAR, BER-AMS, PAR-AMS, PAR-BCN, AMS-BCN, AMS-OPO, BCN-OPO
+
+route 1 = Delta 1 (8 routes)
+```
+
+#### Round 2
+
+```text
+  VIE-BER + BER-AMS = VIE-AMS
+  VIE-PAR + PAR-AMS = VIE-AMS         # duplicate
+  VIE-PAR + PAR-BCN = VIE-BCN
+  BER-AMS + AMS-OPO = BER-OPO
+  BER-AMS + AMS-BCN = BER-BCN
+  PAR-AMS + AMS-OPO = PAR-OPO
+  PAR-AMS + AMS-BCN = PAR-BCN        # already known
+  PAR-BCN + BCN-OPO = PAR-OPO        # duplicate
+  AMS-BCN + BCN-OPO = AMS-OPO        # already known
+
+temp 2 = VIE-AMS, VIE-BCN, BER-BCN, BER-OPO, PAR-BCN, PAR-OPO, AMS-OPO
+
+delta 2 = temp 2 minus route 1
+        = VIE-AMS, VIE-BCN, BER-BCN, BER-OPO, PAR-OPO
+
+route 2 = route 1 + Delta 2 (13 routes)
+```
+
+#### Round 3
+```text
+  VIE-AMS + AMS-BCN = VIE-BCN        # already known
+  VIE-AMS + AMS-OPO = VIE-OPO        # new
+  VIE-BCN + BCN-OPO = VIE-OPO        # duplicate
+  BER-BCN + BCN-OPO = BER-OPO        # already known
+  VIE-BER + BER-BCN = VIE-BCN        # already known
+  VIE-BER + BER-OPO = VIE-OPO        # duplicate
+  VIE-PAR + PAR-OPO = VIE-OPO        # duplicate
+
+temp 3 = VIE-BCN, VIE-OPO, BER-OPO
+
+delta 3 = temp 3 minus route 2
+        = VIE-OPO
+
+route 3 = route 2 + Delta 3 (14 routes)
+```
+
+#### Round 4
+```text
+OPO has no outgoing routes and no route ends at VIE.
+
+temp 4 = empty
+delta 4 = empty
+
+Done.
+```
+
+#### The Final List
+
+```text
+VIE-BER, VIE-PAR, BER-AMS, PAR-AMS, PAR-BCN, AMS-BCN, BCN-OPO, AMS-OPO,
+VIE-AMS, VIE-BCN, BER-BCN, BER-OPO, PAR-OPO, VIE-OPO
+```
 
 :::
+
