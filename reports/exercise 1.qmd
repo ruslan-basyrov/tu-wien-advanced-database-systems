@@ -15,6 +15,7 @@
 
 
 > Create a function that computes the total sales for all months as follows
+>
 > - For each month, run an aggregation query on `go_daily_sales` to calculate the total sales of that month.
 > - If no sales exist for a month, output 0 as the total sales for that month.
 
@@ -127,6 +128,7 @@ With the increase of the data size, differences would obviously increase further
 #### Problem 1
 
 > The GO team wants to ensure data integrity for the `last_sale_date` column. They need a row-level trigger that fires on every update of `last_sale_date` for a product, with the following behavior:
+> 
 > - If the new `last_sale_date` is earlier than the existing value, the trigger should raise an exception to prevent the update.
 > - If the new date passes the validation, the trigger should log that the update was successful (Use `RAISE NOTICE`) and allow the update to proceed. Note that in the case where there is no previous date, this update should be allowed.
 
@@ -157,42 +159,7 @@ EXECUTE FUNCTION check_last_sale_date();
 :::
 
 
-::: {.callout-note collapse="true" title="Tests"}
-```sql
-UPDATE go_products
-SET last_sale_date = '2026-01-02'
-WHERE product_number = 1110;
 
-UPDATE go_products
-SET last_sale_date = '2026-01-03'
-WHERE product_number = 1110;
-
-
-UPDATE go_products
-SET last_sale_date = '2026-01-01'
-WHERE product_number = 1110;
-```
-:::
-
-::: {.callout-note collapse="true" title="Tests' Outcomes"}
-
-**Statement 4** *(UPDATE go_products)*
-```text
-NOTICE: Update proceeded successfully
-UPDATE executed
-```
-
-**Statement 5** *(UPDATE go_products)*
-```text
-NOTICE: Update proceeded successfully
-UPDATE executed
-```
-
-```text
-ERROR: Execution stopped here due to an error: It is wrong to update `last_sale_date` to an earlier date
-```
-
-:::
 
 #### Problem 2
 
@@ -231,14 +198,63 @@ EXECUTE FUNCTION update_last_sale_date();
 :::
 
 
-::: {.callout-note collapse="true" title="Tests"}
+
+
+
+#### Problem 3
+
+> Execute single inserts and bulk inserts into `go_daily_sales` and observe the behaviour of the triggers. Explain the behaviour in terms of which triggers fire, the order in which they execute, and how often each trigger fires.
+
+
+::: {.callout-note collapse="true" title="Testing 2.1"}
 ```sql
-INSERT INTO go_daily_sales VALUES (1201, 1110, 1, '2026-01-01', 1, 1.0, 1.0);
+UPDATE go_products
+SET last_sale_date = '2026-01-02'
+WHERE product_number = 1110;
+
+UPDATE go_products
+SET last_sale_date = '2026-01-03'
+WHERE product_number = 1110;
+
+
+UPDATE go_products
+SET last_sale_date = '2026-01-01'
+WHERE product_number = 1110;
+```
+:::
+
+::: {.callout-note collapse="true" title="Tests' Outcomes (2.1)"}
+
+**Statement 1** *(UPDATE go_products)*
+```text
+NOTICE: Update proceeded successfully
+UPDATE executed
+```
+
+**Statement 2** *(UPDATE go_products)*
+```text
+NOTICE: Update proceeded successfully
+UPDATE executed
+```
+
+```text
+ERROR: Execution stopped here due to an error: It is wrong to update `last_sale_date` to an earlier date
+```
+:::
+
+
+First two statements were correct and triggered the notice which announced the successful updates. The last statement attempted to update the `last_sale_date` to an earlier date which was caught by the trigger which prevented the update.
+
+The second trigger was not invoked since these statements didn't fall into its conditions.
+
+::: {.callout-note collapse="true" title="Testing 2.2"}
+```sql
+INSERT INTO go_daily_sales VALUES (1201, 1110, 1, '2026-01-04', 1, 1.0, 1.0);
 
 INSERT INTO go_daily_sales VALUES
-  (1202, 2110, 1, '2026-01-01', 1, 1.0, 1.0),
-  (1201, 3110, 1, '2026-01-01', 1, 1.0, 1.0),
-  (1201, 4110, 1, '2026-01-01', 1, 1.0, 1.0);
+  (1202, 2110, 1, '2026-01-04', 1, 1.0, 1.0),
+  (1201, 3110, 1, '2026-01-04', 1, 1.0, 1.0),
+  (1201, 4110, 1, '2026-01-04', 1, 1.0, 1.0);
 
 SELECT product_number, last_sale_date 
 FROM go_products 
@@ -246,23 +262,27 @@ WHERE product_number IN (1110, 2110, 3110, 4110);
 ```
 :::
 
-::: {.callout-note collapse="true" title="Tests' Outcomes"}
+::: {.callout-note collapse="true" title="Tests' Outcomes (2.2)"}
 
-**Statement 4** *(INSERT INTO go_daily_sales VALUES)*
+**Statement 1** *(INSERT INTO go_daily_sales VALUES)*
 ```text
 NOTICE: Trigger execution started
+NOTICE: Update proceeded successfully
 NOTICE: Trigger execution ended
 INSERT executed
 ```
 
-**Statement 5** *(INSERT INTO go_daily_sales VALUES)*
+**Statement 2** *(INSERT INTO go_daily_sales VALUES)*
 ```text
 NOTICE: Trigger execution started
+NOTICE: Update proceeded successfully
+NOTICE: Update proceeded successfully
+NOTICE: Update proceeded successfully
 NOTICE: Trigger execution ended
 INSERT executed
 ```
 
-**Statement 6** *(SELECT product_number, last_sale_date)*
+**Statement 3** *(SELECT product_number, last_sale_date)*
 
 | # | product_number | last_sale_date |
 |:---:|:---:|:---:|
@@ -274,9 +294,11 @@ INSERT executed
 :::
 
 
-#### Problem 3
+Both update statements (Statements 1 and 2) were correct from the viewpoint of the trigger in 2.1. The first trigger output its message once for the first statement and thrice for the second statement (thrice, the first trigger is a statement-level: `FOR EACH ROW`).
 
-> Execute single inserts and bulk inserts into `go_daily_sales` and observe the behaviour of the triggers. Explain the behaviour in terms of which triggers fire, the order in which they execute, and how often each trigger fires.
+Of course, the second trigger was also activated which is evident in the results: notices of each statement start and end with the notice by the trigger. Since second trigger updates the rows between its execution's logs, the first trigger's notices happen between the logs.
+
+
+
 
 :::
-
