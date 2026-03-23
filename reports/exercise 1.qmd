@@ -484,4 +484,88 @@ CREATE executed
 : First 15/224 results {.striped .hover}
 :::
 
+
+### Exercise 6
+
+#### Problem 1
+
+::: {.callout-note collapse="true" title="Solution"}
+```sql
+WITH RECURSIVE unique_sales AS (
+    SELECT DISTINCT product_number, date
+    FROM go_daily_sales
+),
+streak_cte AS (
+    SELECT product_number, date AS current_date, 1 AS streak
+    FROM unique_sales
+    
+    UNION ALL
+    
+    SELECT s.product_number, u.date, s.streak + 1
+    FROM streak_cte s
+    JOIN unique_sales u 
+      ON s.product_number = u.product_number 
+     AND u.date = s.current_date + INTERVAL '1 day'
+)
+SELECT product_number, MAX(streak) AS longest_streak
+FROM streak_cte
+GROUP BY product_number
+ORDER BY longest_streak DESC;
+```
+:::
+
+#### Problem 2
+::: {.callout-note collapse="true" title="Solution"}
+```sql
+CREATE TEMP TABLE unique_sales_dates AS
+SELECT DISTINCT product_number, date
+FROM go_daily_sales;
+
+WITH RECURSIVE streak_cte AS (
+    SELECT product_number, date AS current_date, 1 AS streak
+    FROM unique_sales_dates
+    
+    UNION ALL
+    
+    SELECT s.product_number, u.date, s.streak + 1
+    FROM streak_cte s
+    JOIN unique_sales_dates u 
+      ON s.product_number = u.product_number 
+     AND u.date = s.current_date + INTERVAL '1 day'
+)
+SELECT product_number, MAX(streak) AS longest_streak
+FROM streak_cte
+GROUP BY product_number
+ORDER BY longest_streak DESC;
+```
+:::
+
+::: {.callout-note collapse="true" title="Result"}
+
+**Statement 1** *(WITH RECURSIVE unique_sales AS (...))*
+```text
+DEBUG rehashing catalog cache id 12 for pg_cast; 1025 tups, 512 buckets
+```
+
+| # | product_number | longest_streak |
+|:---:|:---:|:---:|
+| 1 | 135120 | 6 |
+| 2 | 145160 | 6 |
+| 3 | 147130 | 6 |
+| 4 | 126110 | 6 |
+| 5 | 129180 | 6 |
+| 6 | 128200 | 6 |
+| 7 | 148110 | 6 |
+| 8 | 133110 | 6 |
+| 9 | 128150 | 6 |
+| 10 | 130110 | 6 |
+| 11 | 127130 | 6 |
+| 12 | 135130 | 6 |
+| 13 | 147160 | 6 |
+| 14 | 129130 | 6 |
+| 15 | 147180 | 6 |
+
+:::
+
+
 :::
