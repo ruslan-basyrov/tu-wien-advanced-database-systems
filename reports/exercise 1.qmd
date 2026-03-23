@@ -54,6 +54,59 @@ $$ LANGUAGE plpgsql;
 |    11 |1,155,027.75 |
 |    12 |  562,755.25 |
 
-: Result of executing `SELECT FROM * get_monthly_sales(109110, 2016)` {.striped .hover}
+: Result of executing `SELECT * FROM get_monthly_sales(109110, 2016)` {.striped .hover}
+
+
+#### Problem 2
+
+Rewrite the function using a cursor to improve its efficiency.
+
+```sql
+CREATE OR REPLACE FUNCTION get_monthly_sales(product_id BIGINT, year INT)
+RETURNS TABLE (month INT, total_sales DECIMAL)
+AS $$
+DECLARE
+  n_month INT;
+  sales DECIMAL[12] := ARRAY_FILL(0, ARRAY[12]);
+  record RECORD;
+  cursor CURSOR FOR
+    SELECT EXTRACT(MONTH FROM date) AS month,
+           SUM(quantity * unit_sale_price) AS total_sales
+    FROM go_daily_sales
+    WHERE product_number = product_id
+      AND EXTRACT(YEAR FROM date) = year
+    GROUP BY month;
+
+BEGIN
+  OPEN cursor;
+  LOOP
+    FETCH cursor INTO record;
+    EXIT WHEN NOT FOUND;
+    sales[record.month] := record.total_sales;
+  END LOOP;
+  CLOSE cursor;
+
+  FOR n_month in 1..12 LOOP
+    month := n_month;
+    total_sales := sales[n_month];
+    RETURN NEXT;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+#### Problem 3
+
+Discuss the difference in efficiency of the two approaches
+
+The difference is significant (3 times!):
+
+- ~4.2ms for the solution with loop,
+- ~1.3ms for the solution with cursor.
+
+(The runs did not include function declaration.)
+
+With the increase of the data size, differences would obviously increase further. As each iteration of the loop processes the whole table, it is much less efficient than the solution with a cursor, which in our case processes the table only once.
 
 :::
+
