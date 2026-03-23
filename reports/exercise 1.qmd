@@ -18,7 +18,7 @@ Create a function that computes the total sales for all months as follows
 
 ```sql
 CREATE OR REPLACE FUNCTION get_monthly_sales(product_id BIGINT, year BIGINT)
-RETURNS TABLE (month BIGINT, total_sales BIGINT)
+RETURNS TABLE (month BIGINT, total_sales DECIMAL)
 AS $$
 DECLARE
   n_month INT;
@@ -41,18 +41,18 @@ $$ LANGUAGE plpgsql;
 
 | month | total sales |
 |:-----:|:-----------:|
-|     1 |     753,929 |
-|     2 |     602,276 |
-|     3 |     502,065 |
-|     4 |     535,228 |
-|     5 |      64,881 |
-|     6 |     627,853 |
-|     7 |     320,140 |
-|     8 |     495,635 |
-|     9 |     638,835 |
-|    10 |     711,212 |
-|    11 |   1,155,028 |
-|    12 |     562,755 |
+|     1 |  753,928.75 |
+|     2 |  602,276.00 |
+|     3 |  502,065.25 |
+|     4 |  535,228.00 |
+|     5 |   64,880.50 |
+|     6 |  627,852.50 |
+|     7 |  320,139.75 |
+|     8 |  495,635.00 |
+|     9 |  638,834.50 |
+|    10 |  711,211.72 |
+|    11 |1,155,027.75 |
+|    12 |  562,755.25 |
 
 : Result of executing `get_monthly_sales(109110, 2016)` {.striped .hover}
 
