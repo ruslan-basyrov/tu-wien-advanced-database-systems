@@ -376,5 +376,42 @@ VIE-BER, VIE-PAR, BER-AMS, PAR-AMS, PAR-BCN, AMS-BCN, BCN-OPO, AMS-OPO,
 VIE-AMS, VIE-BCN, BER-BCN, BER-OPO, PAR-OPO, VIE-OPO
 ```
 
+### Exercise 4
+
+#### Problem 1
+
+::: {.callout-note collapse="true" title="Solution"}
+```datalog
+is_manager(?mid) :- employee(_, _, _, _, _, ?mid, _).
+
+dept_head(?mgr_id) :- department(_, _, ?mgr_id, _).
+
+non_dept_head_manager(?mgr_id) :- is_manager(?mgr_id), ~dept_head(?mgr_id).
+
+exec_dept(?dept_id) :- department(?dept_id, "Executive", _, _).
+
+manages_exec(?mgr_id) :- 
+    employee(_, _, _, _, _, ?mgr_id, ?dept_id), exec_dept(?dept_id).
+
+result(?eid, ?fname, ?lname, ?jid, ?sal, ?mid, ?did) :-
+    employee(?eid, ?fname, ?lname, ?jid, ?sal, ?mid, ?did),
+    non_dept_head_manager(?eid),
+    ~manages_exec(?eid).
+
+@output result.
+```
 :::
+
+#### Problem 2
+
+Resulting stratum:
+
+- Stratum 1: `employee`, `department`, `is_manager`, `dept_head`, `exec_dept`, `manages_exec`. These all depend positively on base tables and each other. 
+- Stratum 2: `non_dept_head_manager`, `result`. These are basically the result of applying negation filter to stratum 1.
+
+
+:::
+
+
+
 
