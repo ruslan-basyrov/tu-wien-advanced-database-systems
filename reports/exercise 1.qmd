@@ -130,6 +130,66 @@ With the increase of the data size, differences would obviously increase further
 > - If the new `last_sale_date` is earlier than the existing value, the trigger should raise an exception to prevent the update.
 > - If the new date passes the validation, the trigger should log that the update was successful (Use `RAISE NOTICE`) and allow the update to proceed. Note that in the case where there is no previous date, this update should be allowed.
 
+::: {.callout-note collapse="true" title="Solution"}
+```sql
+ALTER TABLE go_products ADD COLUMN last_sale_date DATE;
+
+CREATE OR REPLACE FUNCTION check_last_sale_date()
+RETURNS TRIGGER
+AS $$
+  BEGIN
+    IF NEW.last_sale_date < OLD.last_sale_date THEN
+      RAISE EXCEPTION 'Error: It is wrong to update `last_sale_date` to an earlier date';
+    END IF;
+
+    RAISE NOTICE 'Update proceeded successfully';
+
+    RETURN NEW;
+  END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_last_sale_date
+BEFORE UPDATE OF last_sale_date
+ON go_products
+FOR EACH ROW
+EXECUTE FUNCTION check_last_sale_date();
+
+UPDATE go_products
+SET last_sale_date = '2026-01-02'
+WHERE product_number = 1110;
+
+UPDATE go_products
+SET last_sale_date = '2026-01-03'
+WHERE product_number = 1110;
+
+
+UPDATE go_products
+SET last_sale_date = '2026-01-01'
+WHERE product_number = 1110;
+```
+:::
+
+
+::: {.callout-note collapse="true" title="Result"}
+
+**Statement 4** *(UPDATE go_products)*
+```text
+NOTICE: Update proceeded successfully
+UPDATE executed
+```
+
+**Statement 5** *(UPDATE go_products)*
+```text
+NOTICE: Update proceeded successfully
+UPDATE executed
+```
+
+```text
+ERROR: Execution stopped here due to an error: It is wrong to update `last_sale_date` to an earlier date
+```
+
+:::
+
 #### Problem 2
 
 > The GO team wants to automatically maintain the `last_sale_date` in `go_products` whenever new sales are recorded in `go_daily_sales`. Since sales are often inserted in bulk, multiple tuples may be added with a single `INSERT` statement. Create a statement-level trigger that fires once per `INSERT` statement on `go_daily_sales`. The trigger should, update the `last_sale_date` in `go_products` to the current date for all products that have new sales in the inserted rows and log the start and end of the execution of the trigger for auditing purposes (Use `RAISE NOTICE`).
